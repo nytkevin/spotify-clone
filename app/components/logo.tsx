@@ -1,15 +1,17 @@
 import Image from "next/image";
-import Link from "next/link";
 
-export default function Logo() {
+type LogoProps = {
+  width: number;
+  height: number;
+};
+
+export default function Logo({ width = 40, height = 40 }: LogoProps) {
   return (
-    <Link href="/">
-      <Image
-        alt="spotify logo"
-        src="/spotify_Logo.png"
-        width={30}
-        height={30}
-      />
-    </Link>
+    <Image
+      alt="spotify logo"
+      src="/spotify_Logo.png"
+      width={width}
+      height={height}
+    />
   );
 }
