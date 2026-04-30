@@ -20,11 +20,12 @@ export default function Sidebar() {
   const renderActiveView = () => {
     switch (activeView) {
       case "artist":
-        return <Playlist />;
+        return <Artist />;
+
       case "album":
         return <Album />;
       default:
-        return <Artist />;
+        return <Playlist />;
     }
   };
 
