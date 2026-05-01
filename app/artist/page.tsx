@@ -15,7 +15,7 @@ export default function ArtistPage() {
 
   if (isLoading) {
     return (
-      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
+      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-[#121212] p-4 md:grid-cols-4 md:gap-6 md:p-6">
         {Array.from({ length: 50 }).map((_, index) => (
           <div key={index} className="animate-pulse bg-black/90" />
         ))}

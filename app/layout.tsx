@@ -5,6 +5,7 @@ import Header from "./components/header";
 import Sidebar from "./components/sidebar";
 import Providers from "./provider/page";
 import AudioPlayer from "./components/player";
+import PageButtons from "./components/pageButtons";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,14 +32,14 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="h-screen md:h-screen flex flex-col bg-gray-900 space-y-1 pb-24 md:pb-0">
+      <body className="h-screen md:h-screen flex flex-col bg-[#121212] space-y-1 pb-24 md:pb-0">
         <Providers>
           <Header />
 
           <div className="flex-1 flex min-h-0">
             <Sidebar />
             <div className="w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {" "}
+              <PageButtons />
               {children}
             </div>
           </div>

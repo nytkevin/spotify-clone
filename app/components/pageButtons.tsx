@@ -3,18 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar() {
+export default function PageButtons() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/playlist", label: "playlist" },
     { href: "/artist", label: "artist" },
+    { href: "/playlist", label: "playlist" },
     { href: "/album", label: "album" },
   ];
 
   return (
     <div>
-      <div className="flex gap-2 px-4 pt-5">
+      <div className="flex gap-2 px-4 pt-5 justify-center ">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(`${item.href}/`);

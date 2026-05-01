@@ -43,7 +43,7 @@ export default function Card({
         alt={imageAlt}
         width={imageWidth}
         height={imageHeight}
-        className={`${shapeStyle} object-cover ${imageClassName ?? ""}`}
+        className={`${shapeStyle} object-cover h-auto ${imageClassName ?? ""}`}
       />
 
       <div className={`${layout === "row" ? "min-w-0 flex-1" : "w-full"}`}>

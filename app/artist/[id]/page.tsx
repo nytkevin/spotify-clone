@@ -167,7 +167,7 @@ export default function ArtistDetailsPage() {
                         {[1, 2, 3].map((b) => (
                           <span
                             key={b}
-                            className="w-[3px] rounded-sm bg-green-400 animate-bounce"
+                            className="w-0.75 rounded-sm bg-green-400 animate-bounce"
                             style={{
                               animationDelay: `${b * 100}ms`,
                               height: `${(b % 3) * 4 + 4}px`,
