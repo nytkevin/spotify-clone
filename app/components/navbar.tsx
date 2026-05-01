@@ -4,11 +4,29 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MdHomeFilled } from "react-icons/md";
 import { FaSearch } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const response = await fetch("/api/auth/status");
+        const data = await response.json();
+        setIsAuthenticated(data.isAuthenticated);
+      } catch (error) {
+        console.error("Error checking auth status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -25,7 +43,6 @@ export default function Navbar() {
       handleSearch(searchQuery);
     }
   };
-
   return (
     <div className="hidden md:flex flex-row items-center w-full">
       <div className="flex flex-1 justify-center space-x-2">
@@ -37,7 +54,7 @@ export default function Navbar() {
         </Link>
 
         <div className="relative">
-          <FaSearch className="top-3 w-4 h-4 absolute left-3 fill-stone-400" />
+          <FaSearch className="top-3 w-4 h-4 absolute left-3 fill-stone-400 sizes" />
           <input
             placeholder="What do you want to play?"
             className="bg-stone-800 rounded-full text-white w-72 h-10 pl-9 pr-4 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-white/20"
@@ -49,7 +66,12 @@ export default function Navbar() {
       </div>
 
       <div className="mr-4 flex h-8 items-center rounded-xl border px-3 text-green-400 hover:bg-green-500 hover:text-white">
-        <Link href="/login">Login</Link>
+        {!isLoading &&
+          (isAuthenticated ? (
+            <Link href="/api/spotify/logout">Logout</Link>
+          ) : (
+            <Link href="/login">Login</Link>
+          ))}
       </div>
     </div>
   );

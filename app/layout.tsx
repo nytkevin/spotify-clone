@@ -35,9 +35,11 @@ export default function RootLayout({
         <Providers>
           <Header />
 
-          <div className="flex-1 flex">
+          <div className="flex-1 flex min-h-0">
             <Sidebar />
-            <div className="w-full"> {children}</div>
+            <div className="w-full min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {children}
+            </div>
           </div>
           <div>
             <AudioPlayer />
