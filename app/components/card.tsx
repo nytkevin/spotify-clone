@@ -36,7 +36,7 @@ export default function Card({
 
   return (
     <div
-      className={`flex ${layoutStyle} gap-2 p-4 bg-black rounded-2xl cursor-pointer transition-colors duration-200 ease-in-out hover:bg-neutral-700 ${className ?? ""}`}
+      className={`flex ${layoutStyle} gap-2 p-4 bg-[#121212] cursor-pointer transition-colors duration-200 ease-in-out hover:bg-neutral-700 ${className ?? ""}`}
     >
       <Image
         src={src}
