@@ -21,7 +21,6 @@ export default function Sidebar() {
     switch (activeView) {
       case "artist":
         return <Artist />;
-
       case "album":
         return <Album />;
       default:

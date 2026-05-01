@@ -20,16 +20,6 @@ export default function LoginPage() {
             Continue with Spotify
           </button>
         </a>
-
-        {/* <p className="text-neutral-600 text-xs text-center leading-relaxed border-t border-neutral-800 pt-6 w-full">
-          By continuing, you agree to our
-          <span className="text-neutral-400 underline cursor-pointer">
-            Terms of Service
-          </span>
-          <span className="text-neutral-400 underline cursor-pointer">
-            Privacy Policy
-          </span>
-        </p> */}
       </div>
     </div>
   );

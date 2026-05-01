@@ -100,6 +100,7 @@ export type PlaylistTrackItemProp = {
   track: {
     id: string;
     name: string;
+    uri: string;
     duration_ms: number;
     track_number: number;
     explicit: boolean;
@@ -130,6 +131,7 @@ export type PlaylistTracksProp = {
 export type AlbumTrackProp = {
   id: string;
   name: string;
+  uri: string;
   duration_ms: number;
   track_number: number;
   artists: TrackArtistProp[];
@@ -200,6 +202,7 @@ export type SpotifyTrack = {
   id: string;
   name: string;
   duration_ms: number;
+  uri: string;
   track_number: number;
   artists: TrackArtistProp[];
   album?: {
@@ -226,4 +229,101 @@ export type SearchResponceProp = {
   artists?: PaginatedResponseProp<ArtistResponceProp>;
   albums?: PaginatedResponseProp<AlbumResponceProp>;
   playlists?: PaginatedResponseProp<PlaylistProp>;
+};
+
+export type InitOptions = {
+  name?: string;
+  getTokenEndpoint?: string;
+  volume?: number;
+  timeoutMs?: number;
+  onReady?: (deviceId: string) => void;
+  onNotReady?: (deviceId: string) => void;
+  onError?: (err: unknown) => void;
+};
+
+export type SpotifyPlayerListener =
+  | "ready"
+  | "not_ready"
+  | "initialization_error"
+  | "authentication_error"
+  | "account_error"
+  | "playback_error";
+
+export type SpotifyPlayerReadyPayload = {
+  device_id: string;
+};
+
+export type SpotifyPlayerNotReadyPayload = {
+  device_id: string;
+};
+
+export type SpotifyPlayerErrorPayload = {
+  message: string;
+};
+
+export type SpotifyPlayerListenerCallback<T extends SpotifyPlayerListener> =
+  T extends "ready" | "not_ready"
+    ? (
+        payload: T extends "ready"
+          ? SpotifyPlayerReadyPayload
+          : SpotifyPlayerNotReadyPayload,
+      ) => void
+    : (payload: SpotifyPlayerErrorPayload) => void;
+
+export interface SpotifyPlayer {
+  addListener<T extends SpotifyPlayerListener>(
+    eventName: T,
+    callback: SpotifyPlayerListenerCallback<T>,
+  ): boolean;
+  removeListener(eventName: string): boolean;
+  connect(): Promise<boolean>;
+  disconnect(): Promise<void>;
+  getCurrentState(): Promise<Record<string, unknown> | null>;
+  setName(name: string): Promise<void>;
+  getVolume(): Promise<number>;
+  setVolume(volume: number): Promise<void>;
+}
+
+export interface SpotifySDK {
+  Player: new (options: {
+    name: string;
+    getOAuthToken: (callback: (token: string) => void) => void;
+    volume?: number;
+  }) => SpotifyPlayer;
+}
+
+export type SpotifyPlayerInitResult = {
+  player: SpotifyPlayer;
+  deviceId: string;
+};
+
+export type PlayTrackOptions = {
+  trackUri: string;
+  deviceId: string;
+  accessToken: string;
+};
+
+export type PlayTrackResult = {
+  success: boolean;
+  error?: string;
+};
+
+export type CurrentPlayingTrack = {
+  id: string;
+  name: string;
+  artists: Array<{ name: string }>;
+  album: {
+    name: string;
+    images: Array<{ url: string; height: number; width: number }>;
+  };
+  duration_ms: number;
+  uri: string;
+};
+
+export type CurrentPlaybackState = {
+  timestamp: number;
+  progress_ms: number;
+  is_playing: boolean;
+  item: CurrentPlayingTrack | null;
+  currently_playing_type: string;
 };

@@ -91,6 +91,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
         id: track.id,
         name: track.name,
         duration_ms: track.duration_ms,
+        uri: track.uri,
         track_number: track.track_number,
         artists: track.artists,
         album: {
@@ -105,6 +106,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
   const songs: Array<{
     id: string;
     name: string;
+    uri: string;
     duration_ms: number;
     track_number: number;
     artists: { id: string; name: string }[];
@@ -143,6 +145,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
         id: string;
         name: string;
         duration_ms: number;
+        uri: string;
         track_number: number;
         artists: { id: string; name: string }[];
         album: {
@@ -162,6 +165,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
           id: track.id,
           name: track.name,
           duration_ms: track.duration_ms,
+          uri: track.uri,
           track_number: track.track_number,
           artists: track.artists,
           album: {

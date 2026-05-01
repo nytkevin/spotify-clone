@@ -57,5 +57,15 @@ export async function GET(req: NextRequest) {
     maxAge: data.expires_in || 3600,
   });
 
+  // Store refresh token for future use
+  if (data.refresh_token) {
+    res.cookies.set("spotify_refresh_token", data.refresh_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    });
+  }
+
   return res;
 }

@@ -5,15 +5,35 @@ import { useQuery } from "@tanstack/react-query";
 import { getSearch } from "@/app/lib/spotify/getSearch";
 import Card from "@/app/components/card";
 import type { SearchResponceProp } from "@/app/types/spotify";
+import { usePlayer } from "../context/playerContext";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
+  const { refreshCurrentTrack, playUri } = usePlayer();
 
-  // Listen to search bar in navbar
+  const [loadingTrackId, setLoadingTrackId] = useState<string | null>(null);
+  const [playError, setPlayError] = useState<string | null>(null);
+
+  const handlePlayTrack = async (trackUri: string, trackId: string) => {
+    if (loadingTrackId) return;
+
+    setLoadingTrackId(trackId);
+    setPlayError(null);
+
+    const result = await playUri(trackUri);
+
+    if (!result.success) {
+      setPlayError(result.error ?? "Failed to play track");
+    } else {
+      await refreshCurrentTrack();
+    }
+
+    setLoadingTrackId(null);
+  };
+
   useEffect(() => {
     const handler = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
-
       if (customEvent.detail && typeof customEvent.detail === "string") {
         setQuery(customEvent.detail);
       }
@@ -44,6 +64,11 @@ export default function SearchPage() {
       <h1 className="text-2xl font-bold mb-6 text-white">Search Results</h1>
       {loading && <div className="text-white">Loading...</div>}
       {error && <div className="text-red-400">Search failed</div>}
+      {playError && (
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          {playError}
+        </div>
+      )}
       {!loading && !error && searchResults && (
         <div>
           {searchResults.artists?.items && (
@@ -66,66 +91,44 @@ export default function SearchPage() {
               </div>
             </div>
           )}
-          {/* {searchResults.albums && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-white mb-2">Albums</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {searchResults.albums.items.map((album) => (
-                  <Card
-                    key={album.id}
-                    label={album.name}
-                    src={album.images?.[0]?.url || "/placeholder-album.png"}
-                    shape="square"
-                  />
-                ))}
-              </div>
-            </div>
-          )} */}
           {searchResults.tracks?.items && (
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-white mb-2">Tracks</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {searchResults.tracks.items.map((track) => (
-                  <Card
-                    key={track.id}
-                    label={track.name}
-                    desc={
-                      track.artists && Array.isArray(track.artists)
-                        ? track.artists
-                            .filter((a) => a !== null && a !== undefined)
-                            .map((a) => a.name)
-                            .filter(Boolean)
-                            .join(", ")
-                        : ""
-                    }
-                    src={
-                      track.album?.images?.[0]?.url || "/placeholder-track.png"
-                    }
-                    shape="square"
-                  />
-                ))}
+                {searchResults.tracks.items.map((track) => {
+                  return (
+                    <div
+                      key={track.id}
+                      onClick={() => {
+                        if (!loadingTrackId) {
+                          handlePlayTrack(track.uri, track.id);
+                        }
+                      }}
+                      className="cursor-pointer"
+                    >
+                      <Card
+                        label={track.name}
+                        desc={
+                          track.artists && Array.isArray(track.artists)
+                            ? track.artists
+                                .filter((a) => a !== null && a !== undefined)
+                                .map((a) => a.name)
+                                .filter(Boolean)
+                                .join(", ")
+                            : ""
+                        }
+                        src={
+                          track.album?.images?.[0]?.url ||
+                          "/placeholder-track.png"
+                        }
+                        shape="square"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
-          {/* {searchResults.playlists && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold text-white mb-2">
-                Playlists
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {searchResults.playlists.items.map((playlist) => (
-                  <Card
-                    key={playlist.id}
-                    label={playlist.name}
-                    src={
-                      playlist.images?.[0]?.url || "/placeholder-playlist.png"
-                    }
-                    shape="square"
-                  />
-                ))}
-              </div>
-            </div>
-          )} */}
         </div>
       )}
       {!loading && !error && !results && (

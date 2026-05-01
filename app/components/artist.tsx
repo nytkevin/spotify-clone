@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import getArtists from "../lib/spotify/getArtists";
 import { ArtistResponceProp } from "../types/spotify";
 import Card from "./card";
+import Link from "next/link";
 
 export default function Artist() {
   const { data, isLoading, error } = useQuery({
@@ -16,17 +17,18 @@ export default function Artist() {
     <div>
       <li>
         {data.artists.items.map((artist: ArtistResponceProp) => (
-          <Card
-            key={artist.id}
-            label={artist.name}
-            src={artist.images?.[0]?.url ?? "/fallback.png"}
-            alt={artist.name}
-            shape="circle"
-            width={50}
-            height={50}
-            layout="row"
-            className="justify-start"
-          />
+          <Link key={artist.id} href={`/artist/${artist.id}`}>
+            <Card
+              label={artist.name}
+              src={artist.images?.[0]?.url ?? "/fallback.png"}
+              alt={artist.name}
+              shape="circle"
+              width={50}
+              height={50}
+              layout="row"
+              className="justify-start"
+            />
+          </Link>
         ))}
       </li>
     </div>

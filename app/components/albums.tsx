@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlbumResponceProp } from "../types/spotify";
 import Card from "./card";
 import getAlbums from "../lib/spotify/getAlbums";
+import Link from "next/link";
 
 type SavedAlbumItem = {
   album: AlbumResponceProp;
@@ -19,21 +20,22 @@ export default function Album() {
   return (
     <div>
       <li>
-        {data.albums.items.map((item: SavedAlbumItem, index: number) => {
-          const album = item.album;
+        {data.albums.items.map((item: SavedAlbumItem) => {
+          const album = item.album as AlbumResponceProp;
 
           return (
-            <Card
-              key={album.id || `${album.name}-${index}`}
-              label={album.name}
-              src={album.images?.[0]?.url ?? "/fallback.png"}
-              alt={album.name ?? "fallback"}
-              shape="square"
-              width={50}
-              height={50}
-              layout="row"
-              className="justify-start"
-            />
+            <Link key={album.id} href={`/album/${album.id}`}>
+              <Card
+                label={album.name}
+                src={album.images?.[0]?.url ?? "/fallback.png"}
+                alt={album.name ?? "fallback"}
+                shape="square"
+                width={50}
+                height={50}
+                layout="row"
+                className="justify-start"
+              />
+            </Link>
           );
         })}
       </li>

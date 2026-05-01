@@ -1,18 +1,20 @@
-const scope =
-  "user-read-private " +
-  "user-read-email " +
-  "user-follow-read " +
-  "user-top-read " +
-  "user-read-recently-played " +
-  "playlist-read-private " +
-  "playlist-read-collaborative " +
-  "playlist-modify-public " +
-  "playlist-modify-private " +
-  "user-library-read " +
-  "user-library-modify " +
-  "user-read-currently-playing " +
-  "user-read-playback-state " +
-  "user-modify-playback-state";
+const scope = [
+  "user-read-private",
+  "user-read-email",
+  "user-follow-read",
+  "user-top-read",
+  "user-read-recently-played",
+  "playlist-read-private",
+  "playlist-read-collaborative",
+  "playlist-modify-public",
+  "playlist-modify-private",
+  "user-library-read",
+  "user-library-modify",
+  "user-read-currently-playing",
+  "user-read-playback-state",
+  "user-modify-playback-state",
+  "streaming",
+].join(" ");
 
 export function getLoginUrl(): string {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
