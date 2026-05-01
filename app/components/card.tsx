@@ -36,14 +36,14 @@ export default function Card({
 
   return (
     <div
-      className={`flex ${layoutStyle} gap-2 p-4 cursor-pointer bg-[#121212] transition-colors duration-200 ease-in-out hover:bg-neutral-700 ${className ?? ""}`}
+      className={`flex ${layoutStyle} gap-2 p-4 bg-black rounded-2xl cursor-pointer transition-colors duration-200 ease-in-out hover:bg-neutral-700 ${className ?? ""}`}
     >
       <Image
         src={src}
         alt={imageAlt}
         width={imageWidth}
         height={imageHeight}
-        className={`${shapeStyle} object-cover  h-auto ${imageClassName ?? ""}`}
+        className={`${shapeStyle} object-cover ${imageClassName ?? ""}`}
       />
 
       <div className={`${layout === "row" ? "min-w-0 flex-1" : "w-full"}`}>

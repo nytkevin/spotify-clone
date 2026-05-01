@@ -23,7 +23,7 @@ export default function Playlist() {
                 label={playlist.name}
                 src={playlist.images?.[0]?.url ?? "/fallback.png"}
                 alt={playlist.name}
-                shape="square"
+                shape="circle"
                 width={50}
                 height={50}
                 layout="row"
