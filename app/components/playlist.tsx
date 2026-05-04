@@ -10,9 +10,48 @@ export default function Playlist() {
     queryFn: getPlaylists,
   });
 
-  if (isLoading) return <p> fetching the playlists</p>;
-  if (error) return <p> the error is {error.message}</p>;
-  if (!data) return <p>no data being retured from API</p>;
+  if (isLoading)
+    return (
+      <div>
+        <li className="space-y-4">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <div key={index} className="flex items-center gap-4 p-2">
+              <div className="w-12 h-12 bg-gray-300 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="flex-1">
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded animate-pulse w-3/4" />
+              </div>
+            </div>
+          ))}
+        </li>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="w-full h-64 flex items-center justify-center px-4">
+        <div className="text-center max-w-xs">
+          <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">
+            Failed to Load Playlist
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            {error.message}
+          </p>
+        </div>
+      </div>
+    );
+
+  if (!data)
+    return (
+      <div className="w-full h-64 flex items-center justify-center px-4">
+        <div className="text-center max-w-xs">
+          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            No Playlists Found
+          </h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Unable to retrieve playlists data at this time
+          </p>
+        </div>
+      </div>
+    );
   return (
     <div>
       <li>

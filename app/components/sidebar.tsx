@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { TiThMenu } from "react-icons/ti";
+import { useState, useEffect } from "react";
 import Playlist from "./playlist";
 import Artist from "./artist";
-import Album from "./albums";
+import Album from "./album";
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const [activeView, setActiveView] = useState<"playlist" | "artist" | "album">(
     "artist",
   );
+
+  useEffect(() => {
+    const handleToggleSidebar = (event: Event) => {
+      const customEvent = event as CustomEvent<boolean>;
+      setOpen(customEvent.detail);
+    };
+
+    window.addEventListener("toggle-sidebar", handleToggleSidebar);
+    return () =>
+      window.removeEventListener("toggle-sidebar", handleToggleSidebar);
+  }, []);
 
   const navItems = [
     { key: "artist", label: "artist" },
@@ -29,14 +39,10 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="h-full relative flex flex-col bg-[#121212]">
-      <div className="md:hidden top-4 left-4 z-50 absolute">
-        <button onClick={() => setOpen(!open)}>
-          <TiThMenu size={28} />
-        </button>
-      </div>
+    <div className="h-full relative flex flex-col bg-[#121212] z-50">
+      <div className="md:hidden top-4 left-4 z-50 absolute"></div>
       <aside
-        className={`bg-[#121212] w-60 h-full flex flex-col rounded-r-2xl transform transition-transform duration-300
+        className={`bg-[#121212] w-60 h-full flex flex-col rounded-r-2xl transform transition-transform duration-300 absolute md:relative
     ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="flex gap-2 px-4 pt-5 bg-[#121212]">

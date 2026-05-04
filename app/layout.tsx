@@ -6,6 +6,7 @@ import Sidebar from "./components/sidebar";
 import Providers from "./provider/page";
 import AudioPlayer from "./components/player";
 import PageButtons from "./components/pageButtons";
+import MobileNavbar from "./components/mobile-navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,6 +46,7 @@ export default function RootLayout({
           </div>
           <div>
             <AudioPlayer />
+            <MobileNavbar />
           </div>
         </Providers>
       </body>

@@ -15,20 +15,45 @@ export default function ArtistPage() {
 
   if (isLoading) {
     return (
-      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-[#121212] p-4 md:grid-cols-4 md:gap-6 md:p-6">
-        {Array.from({ length: 50 }).map((_, index) => (
-          <div key={index} className="animate-pulse bg-black/90" />
-        ))}
-      </section>
+      <div>
+        <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl">
+          Your Top Artists
+        </h1>
+        <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
+          {Array.from({ length: 50 }).map((_, index) => (
+            <div
+              key={index}
+              className="animate-pulse flex flex-col items-center space-y-3"
+            >
+              <div className="aspect-square w-full max-w-55 rounded-full bg-neutral-800/60" />
+              <div className="h-4 w-24 rounded bg-neutral-800/60" />
+            </div>
+          ))}
+        </section>
+      </div>
     );
   }
   if (error)
-    return <p className="p-6 text-sm text-red-400">Error: {error.message}</p>;
+    return (
+      <div className="flex flex-col items-center h-screen justify-center rounded-2xl px-6 py-12">
+        <h3 className="mb-2 text-lg font-semibold text-red-400">
+          Failed to Load Artists
+        </h3>
+        <p className="mb-4 text-center text-sm text-neutral-400">
+          {error.message}
+        </p>
+      </div>
+    );
   if (!data)
     return (
-      <p className="p-6 text-sm text-neutral-400">
-        No artist data returned from API.
-      </p>
+      <div className="flex flex-col items-center justify-center rounded-2xl  px-6 py-12">
+        <h3 className="mb-2 text-lg font-semibold text-neutral-300">
+          No Artists Found
+        </h3>
+        <p className="text-center text-sm text-neutral-500">
+          We can not retrieve your top artists. Check back later!
+        </p>
+      </div>
     );
 
   return (
@@ -39,7 +64,7 @@ export default function ArtistPage() {
       <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
         {data.artists.items.map((artist: ArtistResponceProp) => {
           {
-            /** [0] is just to select the highest imahe quality */
+            /** [0] is just to select the highest image quality */
           }
 
           return (

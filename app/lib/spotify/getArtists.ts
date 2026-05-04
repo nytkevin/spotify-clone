@@ -25,7 +25,6 @@ async function getArtists(options: GetArtistsOptions = {}) {
   const data = await res.json();
 
   if (!res.ok) {
-    // of the data sed it truthy do no render the right side
     throw new Error(data.error || "Failed to fetch artists");
   }
 

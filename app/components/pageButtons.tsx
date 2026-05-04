@@ -7,17 +7,17 @@ export default function PageButtons() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/artist", label: "artist" },
-    { href: "/playlist", label: "playlist" },
-    { href: "/album", label: "album" },
+    { href: "/all", label: "All" },
+    { href: "/artist", label: "Artist" },
+    { href: "/playlist", label: "Playlist" },
+    { href: "/album", label: "Album" },
   ];
 
   return (
     <div>
       <div className="flex gap-2 px-4 pt-5 justify-center ">
         {navItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive = pathname === item.href;
 
           return (
             <Link
