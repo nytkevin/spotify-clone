@@ -282,6 +282,7 @@ export interface SpotifyPlayer {
   setName(name: string): Promise<void>;
   getVolume(): Promise<number>;
   setVolume(volume: number): Promise<void>;
+  seek(positionMs: number): Promise<void>;
 }
 
 export interface SpotifySDK {

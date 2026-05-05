@@ -13,6 +13,8 @@ import {
   getCurrentPlayingTrack,
   CurrentPlaybackState,
   playTrack,
+  seekTrack,
+  nextTrack,
 } from "./webPlaybackSDK";
 import { initializePlayerAndTransferPlayback } from "@/app/util/spotify";
 import type { SpotifyPlayer } from "@/app/types/spotify";
@@ -22,8 +24,17 @@ type PlayerContextType = {
   isLoading: boolean;
   accessToken: string | null;
   deviceId: string | null;
+  volume: number;
+  autoplay: boolean;
   refreshCurrentTrack: () => Promise<void>;
-  playUri: (trackUri: string) => Promise<{ success: boolean; error?: string }>;
+  playUri: (
+    trackUri: string,
+    contextUri?: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  setVolume: (volume: number) => Promise<void>;
+  getVolume: () => Promise<number | null>;
+  seek: (positionMs: number) => Promise<void>;
+  toggleAutoplay: () => void;
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -38,11 +49,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);
+  const [volume, setVolumeState] = useState<number>(0.5);
+  const [autoplay, setAutoplay] = useState(true);
 
   // Persist the SDK player instance across renders
   const playerRef = useRef<SpotifyPlayer | null>(null);
   const tokenRef = useRef<string | null>(null);
   tokenRef.current = accessToken;
+
+  // Track previous state to detect track end
+  const previousProgressRef = useRef<number>(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,10 +97,44 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     try {
       const track = await getCurrentPlayingTrack(token);
       setCurrentTrack(track);
+
+      // Handle autoplay: detect when track ends
+      if (
+        autoplay &&
+        track &&
+        track.is_playing &&
+        track.item &&
+        track.progress_ms !== null
+      ) {
+        const currentProgress = track.progress_ms;
+        const duration = track.item.duration_ms;
+        const previousProgress = previousProgressRef.current;
+
+        // Track has ended if progress went backwards or is near the end and was previously higher
+        // This handles the case where the track naturally ends
+        if (
+          currentProgress < previousProgress - 100 ||
+          currentProgress >= duration - 500
+        ) {
+          // Only auto-skip once per track by checking if we're at the end
+          if (currentProgress >= duration - 500) {
+            previousProgressRef.current = 0;
+            // Auto-skip to next track
+            await nextTrack(token);
+            // Wait a moment for the next track to load
+            setTimeout(() => refreshCurrentTrack(), 1000);
+            return;
+          }
+        }
+
+        previousProgressRef.current = currentProgress;
+      } else {
+        previousProgressRef.current = 0;
+      }
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [autoplay]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -96,9 +146,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   /**
    * Play a URI. Initializes the SDK player on the first call only.
    * On subsequent calls, reuses the existing player + deviceId.
+   * Supports both single track (trackUri) and context (playlist/album via contextUri).
+   * When contextUri is provided, it plays the full context.
    */
   const playUri = useCallback(
-    async (trackUri: string) => {
+    async (trackUri: string, contextUri?: string) => {
       const token = tokenRef.current;
       if (!token) return { success: false, error: "No access token" };
 
@@ -118,6 +170,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
           const playResult = await playTrack({
             trackUri,
+            contextUri,
             deviceId: result.deviceId,
             accessToken: token,
           });
@@ -128,6 +181,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
         const playResult = await playTrack({
           trackUri,
+          contextUri,
           deviceId,
           accessToken: token,
         });
@@ -142,6 +196,66 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     [deviceId, refreshCurrentTrack],
   );
 
+  /**
+   * Set the volume for the Web Playback SDK player.
+   * Volume should be between 0 and 1.
+   */
+  const setVolume = useCallback(async (newVolume: number) => {
+    if (!playerRef.current) return;
+
+    // Clamp volume between 0 and 1
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+
+    try {
+      await playerRef.current.setVolume(clampedVolume);
+      setVolumeState(clampedVolume);
+    } catch (err) {
+      console.error("Failed to set volume:", err);
+    }
+  }, []);
+
+  /**
+   * Get the current volume from the Web Playback SDK player.
+   */
+  const getVolume = useCallback(async (): Promise<number | null> => {
+    if (!playerRef.current) return null;
+
+    try {
+      const currentVolume = await playerRef.current.getVolume();
+      setVolumeState(currentVolume);
+      return currentVolume;
+    } catch (err) {
+      console.error("Failed to get volume:", err);
+      return null;
+    }
+  }, []);
+
+  /**
+   * Seek to a position in the current track.
+   * @param positionMs Position in milliseconds
+   */
+  const seek = useCallback(
+    async (positionMs: number) => {
+      if (!playerRef.current) return;
+
+      try {
+        await seekTrack(playerRef.current, positionMs);
+        // Refresh the track position after seeking
+        await refreshCurrentTrack();
+      } catch (err) {
+        console.error("Failed to seek track:", err);
+      }
+    },
+    [refreshCurrentTrack],
+  );
+
+  /**
+   * Toggle autoplay on/off
+   */
+  const toggleAutoplay = useCallback(() => {
+    setAutoplay((prev) => !prev);
+  }, []);
+
   return (
     <PlayerContext.Provider
       value={{
@@ -149,8 +263,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         isLoading,
         accessToken,
         deviceId,
+        volume,
+        autoplay,
         refreshCurrentTrack,
         playUri,
+        setVolume,
+        getVolume,
+        seek,
+        toggleAutoplay,
       }}
     >
       {children}

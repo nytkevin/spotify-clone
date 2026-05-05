@@ -36,7 +36,9 @@ export default function AlbumDetailsPage() {
     setLoadingTrackId(trackId);
     setPlayError(null);
 
-    const result = await playUri(trackUri);
+    // Pass the album context so next/previous work with the full queue
+    const albumContextUri = `spotify:album:${albumId}`;
+    const result = await playUri(trackUri, albumContextUri);
 
     if (!result.success) {
       setPlayError(result.error ?? "Failed to play track");

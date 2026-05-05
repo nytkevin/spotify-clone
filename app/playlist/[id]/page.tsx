@@ -34,7 +34,9 @@ export default function PlaylistDetailsPage() {
     setLoadingTrackId(trackId);
     setPlayError(null);
 
-    const result = await playUri(trackUri);
+    // Pass the playlist context so next/previous work with the full queue
+    const playlistContextUri = `spotify:playlist:${playlistId}`;
+    const result = await playUri(trackUri, playlistContextUri);
 
     if (!result.success) {
       setPlayError(result.error ?? "Failed to play track");

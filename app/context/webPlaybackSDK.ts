@@ -4,6 +4,7 @@ import type { InitOptions, SpotifyPlayer } from "@/app/types/spotify";
 
 export type PlayTrackOptions = {
   trackUri: string;
+  contextUri?: string;
   deviceId: string;
   accessToken: string;
 };
@@ -18,11 +19,11 @@ export type CurrentPlayingTrack = {
   name: string;
   artists: Array<{ name: string }>;
   album: {
+    uri: string;
     name: string;
     images: Array<{ url: string; height: number; width: number }>;
   };
   duration_ms: number;
-  uri: string;
 };
 
 export type CurrentPlaybackState = {
@@ -34,16 +35,17 @@ export type CurrentPlaybackState = {
 };
 
 /**
- * Play a track on the given device via the Spotify Web API.
+ * Play a track or context (playlist/album) on the given device via the Spotify Web API.
+ * Supports both individual tracks and full playlists/albums for queue support.
  * Falls back to omitting device_id if the device returns 404
  * (can happen briefly after SDK ready fires).
  */
 export async function playTrack(
   options: PlayTrackOptions,
 ): Promise<PlayTrackResult> {
-  const { trackUri, deviceId, accessToken } = options;
+  const { trackUri, contextUri, deviceId, accessToken } = options;
 
-  if (!trackUri || !deviceId || !accessToken) {
+  if (!deviceId || !accessToken || !trackUri) {
     return { success: false, error: "Missing required parameters" };
   }
 
@@ -52,11 +54,21 @@ export async function playTrack(
     "Content-Type": "application/json",
   };
 
+  // Build the request body based on whether we're playing a context or a single track
+  // When playing a context (playlist/album), use trackUri to specify which track to start with
+  const playBody = contextUri
+    ? {
+        device_id: deviceId,
+        context_uri: contextUri,
+        offset: { uri: trackUri },
+      }
+    : { device_id: deviceId, uris: [trackUri] };
+
   try {
     const response = await fetch("https://api.spotify.com/v1/me/player/play", {
       method: "PUT",
       headers,
-      body: JSON.stringify({ device_id: deviceId, uris: [trackUri] }),
+      body: JSON.stringify(playBody),
     });
 
     if (response.ok || response.status === 204) {
@@ -69,12 +81,16 @@ export async function playTrack(
     // Device not yet visible to Spotify's backend — retry without device_id
     // so it targets whatever the SDK has made active
     if (response.status === 404) {
+      const fallbackBody = contextUri
+        ? { context_uri: contextUri, offset: { uri: trackUri } }
+        : { uris: [trackUri] };
+
       const fallback = await fetch(
         "https://api.spotify.com/v1/me/player/play",
         {
           method: "PUT",
           headers,
-          body: JSON.stringify({ uris: [trackUri] }),
+          body: JSON.stringify(fallbackBody),
         },
       );
 
@@ -171,3 +187,21 @@ export const resumePlayback = (t: string) => playerAction(t, "/play");
 export const nextTrack = (t: string) => playerAction(t, "/next", "POST");
 export const previousTrack = (t: string) =>
   playerAction(t, "/previous", "POST");
+
+/**
+ * Seek to a position in the current track using the Web Playback SDK.
+ * This requires the player instance to be available.
+ * @param player The Spotify player instance
+ * @param positionMs The position in milliseconds to seek to
+ */
+export async function seekTrack(
+  player: SpotifyPlayer,
+  positionMs: number,
+): Promise<void> {
+  try {
+    await player.seek(positionMs);
+  } catch (err) {
+    console.error("Failed to seek track:", err);
+    throw err;
+  }
+}
