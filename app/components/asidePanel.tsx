@@ -63,7 +63,7 @@ export default function AsidePanel() {
       </div>
 
       {activeTab === "queue" && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {queue.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500 text-center px-4">

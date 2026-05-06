@@ -589,3 +589,94 @@ export async function getRecentlyPlayedTracks(
     return null;
   }
 }
+
+/**
+ * Add a track to the user's queue.
+ * @param trackUri The URI of the track to add
+ * @param accessToken The user's access token
+ * @param deviceId Optional device ID
+ */
+export async function addToQueue(
+  trackUri: string,
+  accessToken: string,
+  deviceId?: string,
+): Promise<PlayTrackResult> {
+  try {
+    const url = new URL("https://api.spotify.com/v1/me/player/queue");
+    url.searchParams.append("uri", trackUri);
+    if (deviceId) {
+      url.searchParams.append("device_id", deviceId);
+    }
+
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (response.ok || response.status === 204) {
+      return { success: true };
+    }
+
+    return { success: false, error: `HTTP ${response.status}` };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return { success: false, error: message };
+  }
+}
+
+type SpotifyRecommendationsResponse = {
+  seeds: Array<{
+    id: string;
+    initialPoolSize: number;
+    afterFilteringSize: number;
+    afterRelinkingSize: number;
+    href: string | null;
+    type: string;
+  }>;
+  tracks: SpotifyTrackResponse[];
+};
+
+/**
+ * Get track recommendations based on seed tracks.
+ * @param seedTrackId The ID of the track to base recommendations on
+ * @param accessToken The user's access token
+ * @param limit Number of recommendations to fetch (1-100, default 5)
+ */
+export async function getRecommendations(
+  seedTrackId: string,
+  accessToken: string,
+  limit: number = 5,
+): Promise<QueueTrack[] | null> {
+  try {
+    const url = new URL("https://api.spotify.com/v1/recommendations");
+    url.searchParams.append("seed_tracks", seedTrackId);
+    url.searchParams.append(
+      "limit",
+      Math.min(100, Math.max(1, limit)).toString(),
+    );
+
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as SpotifyRecommendationsResponse;
+
+    return (data.tracks || []).map(
+      (track: SpotifyTrackResponse): QueueTrack => ({
+        id: track.id,
+        name: track.name,
+        artists: track.artists || [],
+        album: track.album,
+        duration_ms: track.duration_ms,
+        uri: track.uri,
+      }),
+    );
+  } catch {
+    return null;
+  }
+}

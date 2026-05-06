@@ -21,6 +21,8 @@ import {
   setRepeatMode,
   setShuffle,
   getRecentlyPlayedTracks,
+  addToQueue,
+  getRecommendations,
   type QueueTrack,
   type Device,
   type RepeatMode,
@@ -86,6 +88,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   // Track previous state to detect track end
   const previousProgressRef = useRef<number>(0);
+
+  // Track which recommendations we've already added to avoid duplicates
+  const addedTracksRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -194,20 +199,67 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [accessToken, refreshCurrentTrack]);
 
-  // Fetch queue whenever current track changes
+  // Reset added tracks when a new track starts playing
+  useEffect(() => {
+    if (currentTrack?.item?.id) {
+      addedTracksRef.current.clear();
+    }
+  }, [currentTrack?.item?.id]);
+
+  // Fetch queue whenever current track changes and auto-refill when low
   useEffect(() => {
     const token = tokenRef.current;
-    if (!token) return;
+    const currentTrackId = currentTrack?.item?.id;
 
-    async function fetchQueue(accessToken: string) {
+    if (!token || !currentTrackId) return;
+
+    async function fetchQueueAndRefill(accessToken: string, trackId: string) {
+      // Add a small delay to ensure Spotify has updated the queue
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const queueData = await getQueue(accessToken);
       if (queueData) {
         setQueue(queueData.queue);
+
+        // Check if the queue is filled with duplicates of the current track
+        const allQueueItemsAreSameTrack = queueData.queue.every(
+          (q) => q.id === trackId,
+        );
+
+        // Auto-refill queue with recommendations if:
+        // 1. Queue is too low, OR
+        // 2. Queue is filled with duplicates of the current track
+        if (queueData.queue.length < 5 || allQueueItemsAreSameTrack) {
+          try {
+            const recommendations = await getRecommendations(
+              trackId,
+              accessToken,
+              15,
+            );
+
+            if (recommendations && recommendations.length > 0) {
+              // Filter out duplicates and already added tracks
+              const tracksToAdd = recommendations.filter(
+                (track) =>
+                  track.id !== trackId && // Don't add the current track
+                  !addedTracksRef.current.has(track.id), // Don't re-add already added tracks
+              );
+
+              // Add unique recommended tracks to queue
+              for (const track of tracksToAdd) {
+                await addToQueue(track.uri, accessToken, deviceId || undefined);
+                addedTracksRef.current.add(track.id);
+              }
+            }
+          } catch (err) {
+            console.error("Failed to auto-refill queue:", err);
+          }
+        }
       }
     }
 
-    fetchQueue(token);
-  }, [currentTrack?.item?.id]);
+    fetchQueueAndRefill(token, currentTrackId);
+  }, [currentTrack?.item?.id, deviceId]);
 
   /**
    * Play a URI. Requires the SDK player to be initialized and device ID to be available.
