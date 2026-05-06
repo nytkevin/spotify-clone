@@ -82,6 +82,30 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Initialize the SDK player as soon as we get an access token
+  useEffect(() => {
+    if (!accessToken || playerRef.current) return;
+
+    let cancelled = false;
+
+    async function initSDK() {
+      try {
+        const result = await initializePlayerAndTransferPlayback();
+        if (!cancelled && result.player && result.deviceId) {
+          playerRef.current = result.player;
+          setDeviceId(result.deviceId);
+        }
+      } catch (err) {
+        console.error("Failed to initialize SDK player:", err);
+      }
+    }
+
+    initSDK();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken]);
+
   // Disconnect the SDK player when the provider unmounts
   useEffect(() => {
     return () => {
@@ -144,8 +168,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [accessToken, refreshCurrentTrack]);
 
   /**
-   * Play a URI. Initializes the SDK player on the first call only.
-   * On subsequent calls, reuses the existing player + deviceId.
+   * Play a URI. Requires the SDK player to be initialized and device ID to be available.
    * Supports both single track (trackUri) and context (playlist/album via contextUri).
    * When contextUri is provided, it plays the full context.
    */
@@ -153,32 +176,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     async (trackUri: string, contextUri?: string) => {
       const token = tokenRef.current;
       if (!token) return { success: false, error: "No access token" };
+      if (!deviceId)
+        return { success: false, error: "Device ID not yet available" };
 
       try {
-        if (!playerRef.current || !deviceId) {
-          const result = await initializePlayerAndTransferPlayback();
-
-          if (!result.success || !result.player || !result.deviceId) {
-            return {
-              success: false,
-              error: result.error ?? "Failed to initialize player",
-            };
-          }
-
-          playerRef.current = result.player;
-          setDeviceId(result.deviceId);
-
-          const playResult = await playTrack({
-            trackUri,
-            contextUri,
-            deviceId: result.deviceId,
-            accessToken: token,
-          });
-
-          await refreshCurrentTrack();
-          return playResult;
-        }
-
         const playResult = await playTrack({
           trackUri,
           contextUri,
