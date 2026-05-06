@@ -15,6 +15,16 @@ import {
   playTrack,
   seekTrack,
   nextTrack,
+  getQueue,
+  getAvailableDevices,
+  transferPlayback,
+  setRepeatMode,
+  setShuffle,
+  getRecentlyPlayedTracks,
+  type QueueTrack,
+  type Device,
+  type RepeatMode,
+  type RecentlyPlayedTrack,
 } from "./webPlaybackSDK";
 import { initializePlayerAndTransferPlayback } from "@/app/util/spotify";
 import type { SpotifyPlayer } from "@/app/types/spotify";
@@ -26,6 +36,11 @@ type PlayerContextType = {
   deviceId: string | null;
   volume: number;
   autoplay: boolean;
+  queue: QueueTrack[];
+  devices: Device[];
+  repeatMode: RepeatMode;
+  shuffle: boolean;
+  recentlyPlayed: RecentlyPlayedTrack[];
   refreshCurrentTrack: () => Promise<void>;
   playUri: (
     trackUri: string,
@@ -35,6 +50,11 @@ type PlayerContextType = {
   getVolume: () => Promise<number | null>;
   seek: (positionMs: number) => Promise<void>;
   toggleAutoplay: () => void;
+  fetchDevices: () => Promise<void>;
+  switchDevice: (deviceId: string) => Promise<void>;
+  cycleRepeatMode: () => Promise<void>;
+  toggleShuffle: () => Promise<void>;
+  fetchRecentlyPlayed: () => Promise<void>;
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -51,6 +71,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [volume, setVolumeState] = useState<number>(0.5);
   const [autoplay, setAutoplay] = useState(true);
+  const [queue, setQueue] = useState<QueueTrack[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [repeatMode, setRepeatModeState] = useState<RepeatMode>("off");
+  const [shuffle, setShuffleState] = useState<boolean>(false);
+  const [recentlyPlayed, setRecentlyPlayed] = useState<RecentlyPlayedTrack[]>(
+    [],
+  );
 
   // Persist the SDK player instance across renders
   const playerRef = useRef<SpotifyPlayer | null>(null);
@@ -167,6 +194,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [accessToken, refreshCurrentTrack]);
 
+  // Fetch queue whenever current track changes
+  useEffect(() => {
+    const token = tokenRef.current;
+    if (!token) return;
+
+    async function fetchQueue(accessToken: string) {
+      const queueData = await getQueue(accessToken);
+      if (queueData) {
+        setQueue(queueData.queue);
+      }
+    }
+
+    fetchQueue(token);
+  }, [currentTrack?.item?.id]);
+
   /**
    * Play a URI. Requires the SDK player to be initialized and device ID to be available.
    * Supports both single track (trackUri) and context (playlist/album via contextUri).
@@ -257,6 +299,122 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setAutoplay((prev) => !prev);
   }, []);
 
+  /**
+   * Fetch available devices from Spotify
+   */
+  const fetchDevices = useCallback(async () => {
+    const token = tokenRef.current;
+    if (!token) return;
+
+    try {
+      const availableDevices = await getAvailableDevices(token);
+      if (availableDevices) {
+        setDevices(availableDevices);
+      }
+    } catch (err) {
+      console.error("Failed to fetch devices:", err);
+    }
+  }, []);
+
+  /**
+   * Switch playback to a different device
+   */
+  const switchDevice = useCallback(
+    async (newDeviceId: string) => {
+      const token = tokenRef.current;
+      if (!token) return;
+
+      try {
+        const result = await transferPlayback(newDeviceId, token, true);
+
+        if (result.success) {
+          setDeviceId(newDeviceId);
+          // Refresh devices to show the new active device
+          await fetchDevices();
+        }
+      } catch (err) {
+        console.error("Failed to switch device:", err);
+      }
+    },
+    [fetchDevices],
+  );
+
+  /**
+   * Fetch recently played tracks from Spotify
+   */
+  const fetchRecentlyPlayed = useCallback(async () => {
+    const token = tokenRef.current;
+    if (!token) return;
+
+    try {
+      const tracks = await getRecentlyPlayedTracks(token, 10);
+      if (tracks) {
+        setRecentlyPlayed(tracks);
+      }
+    } catch (err) {
+      console.error("Failed to fetch recently played tracks:", err);
+    }
+  }, []);
+
+  // Fetch devices whenever access token changes
+  useEffect(() => {
+    if (!accessToken) return;
+    fetchDevices();
+    const interval = setInterval(fetchDevices, 10000); // Refresh every 10s
+    return () => clearInterval(interval);
+  }, [accessToken, fetchDevices]);
+
+  // Fetch recently played tracks whenever access token changes
+  useEffect(() => {
+    if (!accessToken) return;
+    fetchRecentlyPlayed();
+    const interval = setInterval(fetchRecentlyPlayed, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, [accessToken, fetchRecentlyPlayed]);
+
+  /**
+   * Cycle through repeat modes: off → context → track → off
+   */
+  const cycleRepeatMode = useCallback(async () => {
+    const token = tokenRef.current;
+    if (!token) return;
+
+    const modeSequence: RepeatMode[] = ["off", "context", "track"];
+    const currentIndex = modeSequence.indexOf(repeatMode);
+    const nextIndex = (currentIndex + 1) % modeSequence.length;
+    const nextMode = modeSequence[nextIndex];
+
+    try {
+      const result = await setRepeatMode(
+        nextMode,
+        token,
+        deviceId || undefined,
+      );
+      if (result.success) {
+        setRepeatModeState(nextMode);
+      }
+    } catch (err) {
+      console.error("Failed to set repeat mode:", err);
+    }
+  }, [repeatMode, deviceId]);
+
+  /**
+   * Toggle shuffle on/off
+   */
+  const toggleShuffle = useCallback(async () => {
+    const token = tokenRef.current;
+    if (!token) return;
+
+    try {
+      const result = await setShuffle(!shuffle, token, deviceId || undefined);
+      if (result.success) {
+        setShuffleState(!shuffle);
+      }
+    } catch (err) {
+      console.error("Failed to toggle shuffle:", err);
+    }
+  }, [shuffle, deviceId]);
+
   return (
     <PlayerContext.Provider
       value={{
@@ -266,12 +424,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         deviceId,
         volume,
         autoplay,
+        queue,
+        devices,
+        repeatMode,
+        shuffle,
+        recentlyPlayed,
         refreshCurrentTrack,
         playUri,
         setVolume,
         getVolume,
         seek,
         toggleAutoplay,
+        fetchDevices,
+        switchDevice,
+        cycleRepeatMode,
+        toggleShuffle,
+        fetchRecentlyPlayed,
       }}
     >
       {children}

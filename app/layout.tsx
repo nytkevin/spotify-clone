@@ -7,6 +7,7 @@ import Providers from "./provider/page";
 import AudioPlayer from "./components/player";
 import PageButtons from "./components/pageButtons";
 import MobileNavbar from "./components/mobile-navbar";
+import AsidePanel from "./components/asidePanel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,11 +38,14 @@ export default function RootLayout({
         <Providers>
           <Header />
 
-          <div className="flex-1 flex min-h-0">
+          <div className="flex-1 min-h-0 flex">
             <Sidebar />
-            <div className="w-full overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <PageButtons />
               {children}
+            </div>
+            <div className="w-80 hidden lg:block">
+              <AsidePanel />
             </div>
           </div>
           <div>

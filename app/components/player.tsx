@@ -8,7 +8,6 @@ import {
   FaRepeat,
   FaVolumeHigh,
   FaHeart,
-  FaDesktop,
   FaListUl,
   FaPause,
 } from "react-icons/fa6";
@@ -21,6 +20,7 @@ import {
 } from "@/app/context/webPlaybackSDK";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import DeviceSelector from "./device-selector";
 
 type ControlAction = "play" | "next" | "prev" | null;
 
@@ -42,6 +42,10 @@ export default function AudioPlayer() {
     seek,
     autoplay,
     toggleAutoplay,
+    repeatMode,
+    cycleRepeatMode,
+    shuffle,
+    toggleShuffle,
   } = usePlayer();
   const [loadingControl, setLoadingControl] = useState<ControlAction>(null);
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
@@ -146,8 +150,14 @@ export default function AudioPlayer() {
           <div className="flex items-center gap-3 text-neutral-300">
             <button
               type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white"
+              onClick={toggleShuffle}
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+                shuffle
+                  ? "bg-green-500 text-black hover:bg-green-400"
+                  : "text-neutral-400 hover:text-white hover:bg-white/10"
+              }`}
               aria-label="Shuffle"
+              title={shuffle ? "Shuffle enabled" : "Shuffle disabled"}
             >
               <FaShuffle className="h-4 w-4" />
             </button>
@@ -198,10 +208,20 @@ export default function AudioPlayer() {
 
             <button
               type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white"
-              aria-label="Repeat"
+              onClick={cycleRepeatMode}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition ${
+                repeatMode === "off"
+                  ? "text-neutral-400 hover:text-white hover:bg-white/10"
+                  : "bg-green-500 text-black hover:bg-green-400"
+              }`}
+              aria-label="Repeat mode"
+              title={`Repeat: ${repeatMode}`}
             >
-              <FaRepeat className="h-4 w-4" />
+              {repeatMode === "track" ? (
+                <span className="text-xs">1</span>
+              ) : (
+                <FaRepeat className="h-4 w-4" />
+              )}
             </button>
 
             <button
@@ -242,13 +262,7 @@ export default function AudioPlayer() {
           >
             <FaListUl className="h-4 w-4" />
           </button>
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white"
-            aria-label="Device"
-          >
-            <FaDesktop className="h-4 w-4" />
-          </button>
+          <DeviceSelector />
           <div
             className="flex items-center gap-2"
             onMouseEnter={() => setIsVolumeHovered(true)}
