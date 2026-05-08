@@ -11,7 +11,7 @@ import getAlbums from "@/app/lib/spotify/getAlbums";
 import getPlaylists from "@/app/lib/spotify/getPlaylists";
 import Card from "@/app/components/card";
 import { usePlayer } from "@/app/context/playerContext";
-import { FaChevronLeft } from "react-icons/fa6";
+import { FaChevronLeft, FaCirclePlay } from "react-icons/fa6";
 import { FaChevronRight } from "react-icons/fa";
 import type {
   ArtistResponceProp,
@@ -37,8 +37,8 @@ type SavedAlbumItem = {
  * All sections feature horizontal scrolling with navigation buttons
  */
 export default function AllPage() {
-  // Get recently played tracks from player context
-  const { recentlyPlayed } = usePlayer();
+  // Get recently played tracks and playUri function from player context
+  const { recentlyPlayed, playUri } = usePlayer();
 
   // Refs for managing horizontal scroll containers
   const artistsScrollRef = useRef<HTMLDivElement>(null);
@@ -289,12 +289,11 @@ export default function AllPage() {
           <div className="grid grid-cols-2 gap-4">
             {/* Limit to 10 most recent tracks */}
             {recentlyPlayed.slice(0, 10).map((item) => (
-              <Link
+              <div
                 key={`${item.track.id}-${item.played_at}`}
-                href={`/search?q=${encodeURIComponent(item.track.name)}`}
-                className="flex gap-4 p-3 rounded-lg hover:bg-neutral-900/50 transition-colors cursor-pointer group"
+                className="flex gap-4 p-3 rounded-lg hover:bg-neutral-900/50 transition-colors group"
               >
-                {/* Album cover image */}
+                {/* Album cover image with play button overlay */}
                 <div className="relative w-12 h-12 shrink-0">
                   {item.track.album?.images?.[0]?.url && (
                     <Image
@@ -305,6 +304,14 @@ export default function AllPage() {
                       className="w-full h-full rounded object-cover"
                     />
                   )}
+                  {/* Play button that appears on hover */}
+                  <button
+                    onClick={() => playUri(item.track.uri)}
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Play track"
+                  >
+                    <FaCirclePlay className="text-white text-lg" />
+                  </button>
                 </div>
                 {/* Track details: name, artist, and album */}
                 <div className="flex-1 min-w-0">
@@ -321,7 +328,7 @@ export default function AllPage() {
                     {item.track.album?.name}
                   </p>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
