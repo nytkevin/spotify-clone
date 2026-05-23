@@ -1,34 +1,39 @@
 "use client";
 
 import getAlbumDetails from "@/app/lib/spotify/getAlbumDetails";
-import Card from "@/app/components/card";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { AlbumDetailsResponseProp } from "@/app/types/spotify";
 import { useState } from "react";
 import { usePlayer } from "@/app/context/playerContext";
-import { FaCirclePlay } from "react-icons/fa6";
+import { IoMdPlay } from "react-icons/io";
+import Image from "next/image";
+import formatDuration from "@/app/lib/time";
 
-function formatDuration(durationMs: number) {
-  const totalSeconds = Math.floor(durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
+// AlbumDetailsPage - Displays all tracks in an album with play controls and animations
+// Features:
+// - Track list with album artwork
+// - Play button overlay on hover
+// - Animated equalizer bars when track is playing
+// - Loading spinner during playback initialization
+// - Click anywhere on track row to play
 export default function AlbumDetailsPage() {
   const params = useParams();
   const idParam = params?.id;
   const albumId = Array.isArray(idParam) ? idParam[0] : (idParam ?? "");
 
-  // playUri: init SDK on first call, reuse player on subsequent calls
-  // currentTrack: polled every 3s from Spotify — source of truth for playing state
+  // Get Spotify player controls and current playback state from context
+  // accessToken: required to authenticate with Spotify Web API
+  // currentTrack: object containing current playing track info, polled every 3s
+  // playUri: function to initiate playback via Spotify Web Playback SDK
   const { accessToken, currentTrack, playUri } = usePlayer();
 
-  // Track which row's play button is in the loading/init state
+  // Track ID of the currently loading track (prevents double-clicks)
   const [loadingTrackId, setLoadingTrackId] = useState<string | null>(null);
+  // Error message displayed if track playback fails
   const [playError, setPlayError] = useState<string | null>(null);
 
+  // Handle track playback - initializes player, plays track within album context
   const handlePlayTrack = async (trackUri: string, trackId: string) => {
     // Prevent double-click while SDK is initializing or a track is loading
     if (loadingTrackId) return;
@@ -36,7 +41,7 @@ export default function AlbumDetailsPage() {
     setLoadingTrackId(trackId);
     setPlayError(null);
 
-    // Pass the album context so next/previous work with the full queue
+    // Pass the album context so next/previous buttons work with the full queue
     const albumContextUri = `spotify:album:${albumId}`;
     const result = await playUri(trackUri, albumContextUri);
 
@@ -47,6 +52,8 @@ export default function AlbumDetailsPage() {
     setLoadingTrackId(null);
   };
 
+  // Fetch album details using React Query with caching
+  // Fetch album details using React Query with caching
   const { data, isLoading, error } = useQuery({
     queryKey: ["album-details", albumId],
     queryFn: () => getAlbumDetails(albumId),
@@ -54,10 +61,12 @@ export default function AlbumDetailsPage() {
     enabled: !!albumId,
   });
 
+  // Loading state - shows skeleton placeholders while fetching album tracks
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-[#121212]">
         <h1 className="mb-4 text-2xl font-bold text-white">Album Songs</h1>
+        {/* Skeleton loaders matching track row layout */}
         <ul className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <li
@@ -77,10 +86,12 @@ export default function AlbumDetailsPage() {
     );
   }
 
+  // Error state - displays error message if query fails
   if (error) {
     return <p className="p-6 text-sm text-red-400">Error: {error.message}</p>;
   }
 
+  // No data state - returned when API response is empty
   if (!data) {
     return (
       <p className="p-6 text-sm text-neutral-400">
@@ -92,36 +103,56 @@ export default function AlbumDetailsPage() {
   const albumData = data as AlbumDetailsResponseProp;
   const album = albumData.album;
 
+  // Main render - display album tracks
   return (
-    <div className="p-6">
+    <div className="p-6 bg-[#121212]">
       <h1 className="mb-4 text-2xl font-bold text-white">Album Songs</h1>
 
+      {/* Error notification for failed playback attempts */}
       {playError && (
         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
           {playError}
         </div>
       )}
 
-      <ul className="space-y-3">
+      {/* Track list container */}
+      <div className="space-y-2">
+        {/* Map through album tracks and render each as an interactive row */}
         {album.tracks.items.map((track, index) => {
+          // Determine if this track is currently loading or playing
           const isTrackLoading = loadingTrackId === track.id;
 
           const isPlaying =
             currentTrack?.item?.id === track.id && currentTrack.is_playing;
 
+          // Format artist names for display
+          const artistNames =
+            track.artists
+              ?.filter((a) => a !== null && a !== undefined)
+              .map((a) => a.name)
+              .filter(Boolean)
+              .join(", ") || "";
+
+          // Track row container - clickable anywhere to play
           return (
-            <li
+            <div
               key={track.id}
-              className="group flex items-center gap-4 rounded-xl bg-neutral-900 p-3 text-sm text-neutral-200 transition hover:bg-neutral-800 h-18"
+              onClick={() => {
+                if (!loadingTrackId) {
+                  handlePlayTrack(track.uri, track.id);
+                }
+              }}
+              className="flex items-center gap-4 p-3 rounded-lg bg-neutral-900/40 hover:bg-neutral-700 transition-colors cursor-pointer group"
             >
-              <div className="w-8 shrink-0 text-right text-xs text-neutral-500">
+              {/* Track number (1, 2, 3...) OR animated equalizer bars when playing */}
+              <p className="w-8 shrink-0 text-right text-xs text-neutral-500">
                 {isPlaying ? (
-                  // Animated equalizer bars — visible only on the active track
-                  <span className="inline-flex items-end gap-px h-4">
+                  // Animated equalizer - 3 bars with staggered bounce animation
+                  <span className="inline-flex gap-px items-end h-4">
                     {[1, 2, 3].map((b) => (
                       <span
                         key={b}
-                        className="w-0.75 rounded-sm bg-green-400 animate-bounce"
+                        className="w-0.75 bg-green-400 rounded-sm animate-bounce"
                         style={{
                           animationDelay: `${b * 100}ms`,
                           height: `${(b % 3) * 4 + 4}px`,
@@ -132,46 +163,54 @@ export default function AlbumDetailsPage() {
                 ) : (
                   (track.track_number ?? index + 1)
                 )}
+              </p>
+
+              {/* Album artwork with play button overlay on hover */}
+              <div className="relative shrink-0">
+                <Image
+                  src={album.images?.[0]?.url || "/placeholder-track.png"}
+                  alt={track.name}
+                  width={48}
+                  height={48}
+                  className="rounded-md object-cover"
+                />
+                {/* Overlay play button - appears on hover and shows loading state */}
+                <button
+                  disabled={!accessToken || !!loadingTrackId}
+                  className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!loadingTrackId) {
+                      handlePlayTrack(track.uri, track.id);
+                    }
+                  }}
+                >
+                  <IoMdPlay fill="green" />
+                </button>
               </div>
 
-              <button
-                onClick={() => handlePlayTrack(track.uri, track.id)}
-                // Disable all buttons while any track is loading to avoid
-                disabled={!accessToken || !!loadingTrackId}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-500 text-black opacity-0 transition hover:scale-105 hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50 group-hover:opacity-100"
-                title={isPlaying ? "Now playing" : "Play track"}
-              >
-                {isTrackLoading ? (
-                  <span className="animate-spin text-lg">⟳</span>
-                ) : (
-                  <FaCirclePlay className="h-5 w-5" />
-                )}
-              </button>
-
-              <Card
-                src={album.images?.[0]?.url ?? "/fallback.png"}
-                alt={track.name}
-                width={56}
-                height={56}
-                shape="square"
-                className="shrink-0 cursor-default rounded-md bg-transparent p-0 hover:bg-transparent"
-                imageClassName="h-14 w-14 rounded-md object-cover"
-              />
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-white">{track.name}</p>
-                <p className="truncate text-xs text-neutral-400">
-                  {track.artists.map((a) => a.name).join(", ")}
+              {/* Track name and artist names */}
+              <div className="grow min-w-0">
+                <p className="text-white font-medium truncate">{track.name}</p>
+                <p className="text-neutral-400 text-sm truncate">
+                  {artistNames}
                 </p>
               </div>
 
-              <p className="shrink-0 pr-4 text-xs text-neutral-400">
-                {formatDuration(track.duration_ms)}
-              </p>
-            </li>
+              {/* Duration and loading indicator spinner */}
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-neutral-400 text-sm">
+                  {formatDuration(track.duration_ms)}
+                </span>
+                {/* Animated spinner appears during track initialization */}
+                {isTrackLoading && (
+                  <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                )}
+              </div>
+            </div>
           );
         })}
-      </ul>
+      </div>
     </div>
   );
 }

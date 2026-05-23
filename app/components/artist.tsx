@@ -3,14 +3,17 @@ import getArtists from "../lib/spotify/getArtists";
 import { ArtistResponceProp } from "../types/spotify";
 import Card from "./card";
 import Link from "next/link";
+import { usePlayer } from "../context/playerContext";
 
 export default function Artist() {
+  const { accessToken } = usePlayer();
   const { data, isLoading, error } = useQuery({
     queryKey: ["artist"],
     queryFn: () => getArtists(),
+    enabled: !!accessToken,
   });
 
-  if (isLoading)
+  if (isLoading || !accessToken)
     return (
       <div>
         <li className="space-y-4">

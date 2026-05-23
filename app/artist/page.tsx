@@ -5,21 +5,24 @@ import Link from "next/link";
 import getArtists from "../lib/spotify/getArtists";
 import Card from "../components/card";
 import { ArtistResponceProp } from "../types/spotify";
+import { usePlayer } from "../context/playerContext";
 
 export default function ArtistPage() {
+  const { accessToken } = usePlayer();
   const { data, isLoading, error } = useQuery({
     queryKey: ["artist"],
     queryFn: () =>
       getArtists({ limit: 50, offset: 0, timeRange: "medium_term" }),
+    enabled: !!accessToken,
   });
 
-  if (isLoading) {
+  if (isLoading || !accessToken) {
     return (
       <div>
-        <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl">
+        <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl bg-[#121212]">
           Your Top Artists
         </h1>
-        <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
+        <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-[#121212] p-4 md:grid-cols-4 md:gap-6 md:p-6">
           {Array.from({ length: 50 }).map((_, index) => (
             <div
               key={index}
@@ -57,16 +60,12 @@ export default function ArtistPage() {
     );
 
   return (
-    <div>
-      <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl">
+    <div className="bg-[#121212]">
+      <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl bg-[#121212] rounded-b-xl">
         Your Top Artists
       </h1>
-      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
+      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-[#121212] p-4 md:grid-cols-4 md:gap-6 md:p-6">
         {data.artists.items.map((artist: ArtistResponceProp) => {
-          {
-            /** [0] is just to select the highest image quality */
-          }
-
           return (
             <Link key={artist.id} href={`/artist/${artist.id}`}>
               <Card
@@ -76,7 +75,7 @@ export default function ArtistPage() {
                 width={320}
                 height={320}
                 shape="circle"
-                className="group border border-white/5 bg-neutral-950/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-neutral-900"
+                className="transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-800"
                 imageClassName="aspect-square w-full max-w-[220px] ring-1 ring-white/10"
               />
             </Link>

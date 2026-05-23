@@ -3,14 +3,17 @@ import Card from "./card";
 import getPlaylists from "../lib/spotify/getPlaylists";
 import { PlaylistProp } from "../types/spotify";
 import Link from "next/link";
+import { usePlayer } from "../context/playerContext";
 
 export default function Playlist() {
+  const { accessToken } = usePlayer();
   const { data, isLoading, error } = useQuery({
     queryKey: ["playlist"],
     queryFn: getPlaylists,
+    enabled: !!accessToken,
   });
 
-  if (isLoading)
+  if (isLoading || !accessToken)
     return (
       <div>
         <li className="space-y-4">

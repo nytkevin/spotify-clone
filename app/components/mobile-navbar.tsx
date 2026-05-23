@@ -5,6 +5,7 @@ import { FaSearch } from "react-icons/fa";
 import { MdHomeFilled } from "react-icons/md";
 import { MdLibraryBooks } from "react-icons/md";
 import { useState } from "react";
+import UserProfileButton from "./user-profile";
 
 export default function MobileNavbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,12 +41,7 @@ export default function MobileNavbar() {
           <MdLibraryBooks className="h-5 w-5" />
         </button>
 
-        <Link
-          href="/login"
-          className="rounded-full border border-green-500/40 px-4 py-2 text-sm font-medium text-green-400 transition-colors hover:bg-green-500 hover:text-white"
-        >
-          Login
-        </Link>
+        <UserProfileButton />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import AudioPlayer from "./components/player";
 import PageButtons from "./components/pageButtons";
 import MobileNavbar from "./components/mobile-navbar";
 import AsidePanel from "./components/asidePanel";
+// import SpotifyLimitationsHero from "./components/hero";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,11 +37,12 @@ export default function RootLayout({
     >
       <body className="h-screen md:h-screen flex flex-col bg-[#121212] space-y-1 pb-24 md:pb-0">
         <Providers>
+          {/* <SpotifyLimitationsHero /> */}
           <Header />
 
           <div className="flex-1 min-h-0 flex">
             <Sidebar />
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-1">
               <PageButtons />
               {children}
             </div>

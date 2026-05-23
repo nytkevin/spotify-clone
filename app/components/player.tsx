@@ -7,8 +7,6 @@ import {
   FaShuffle,
   FaRepeat,
   FaVolumeHigh,
-  FaHeart,
-  FaListUl,
   FaPause,
 } from "react-icons/fa6";
 import { usePlayer } from "@/app/context/playerContext";
@@ -49,6 +47,7 @@ export default function AudioPlayer() {
   } = usePlayer();
   const [loadingControl, setLoadingControl] = useState<ControlAction>(null);
   const [isVolumeHovered, setIsVolumeHovered] = useState(false);
+  const [isMobileVolumeOpen, setIsMobileVolumeOpen] = useState(false);
 
   const handlePlayPause = async () => {
     if (!accessToken) return;
@@ -113,9 +112,9 @@ export default function AudioPlayer() {
   const isDisabled = !!loadingControl || !accessToken;
 
   return (
-    <div className="h-15 border-t border-neutral-800 rounded-t-xl bg-[#181818] px-4 text-white shadow-[0_-8px_24px_rgba(0,0,0,0.35)]">
-      <div className="mx-auto grid h-full grid-cols-[minmax(180px,1.2fr)_minmax(240px,1.5fr)_minmax(180px,1fr)] items-center gap-4">
-        <div className="flex min-w-0 items-center gap-3">
+    <div className="h-15 border-t border-neutral-800 rounded-t-xl bg-[#181818] px-2 sm:px-4 text-white shadow-[0_-8px_24px_rgba(0,0,0,0.35)]">
+      <div className="mx-auto grid h-full grid-cols-[minmax(100px,0.8fr)_minmax(240px,1.5fr)] md:grid-cols-[minmax(180px,1.2fr)_minmax(240px,1.5fr)_minmax(180px,1fr)] items-center gap-1 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-neutral-700 shadow-inner">
             {track?.album.images?.[0]?.url ? (
               <Image
@@ -137,13 +136,6 @@ export default function AudioPlayer() {
               {track?.artists.map((a) => a.name).join(", ") ?? "Spotify Clone"}
             </p>
           </div>
-          <button
-            type="button"
-            className="ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-neutral-300 transition hover:bg-white/10 hover:text-white"
-            aria-label="Like"
-          >
-            <FaHeart className="h-4 w-4" />
-          </button>
         </div>
 
         <div className="flex flex-col items-center gap-0.5 pt-1.5">
@@ -254,14 +246,7 @@ export default function AudioPlayer() {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 text-neutral-300">
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white"
-            aria-label="Queue"
-          >
-            <FaListUl className="h-4 w-4" />
-          </button>
+        <div className="hidden md:flex items-center justify-end gap-2 text-neutral-300">
           <DeviceSelector />
           <div
             className="flex items-center gap-2"
@@ -297,6 +282,35 @@ export default function AudioPlayer() {
               />
             </div>
           </div>
+        </div>
+        <div className="md:hidden flex items-center justify-end gap-2 text-neutral-300">
+          <button
+            type="button"
+            onClick={() => setIsMobileVolumeOpen(!isMobileVolumeOpen)}
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white"
+            aria-label="Volume"
+          >
+            <FaVolumeHigh className="h-3 w-3" />
+          </button>
+          {isMobileVolumeOpen && (
+            <div className="flex items-center gap-2 bg-neutral-800 rounded px-2 py-1">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-neutral-700 accent-white"
+                aria-label="Volume control"
+                style={{
+                  background: `linear-gradient(to right, white 0%, white ${
+                    volume * 100
+                  }%, rgb(55, 65, 81) ${volume * 100}%, rgb(55, 65, 81) 100%)`,
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

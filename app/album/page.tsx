@@ -5,24 +5,27 @@ import getAlbums from "../lib/spotify/getAlbums";
 import Card from "../components/card";
 import { AlbumResponceProp } from "../types/spotify";
 import Link from "next/link";
+import { usePlayer } from "../context/playerContext";
 
 type SavedAlbumItem = {
   album: AlbumResponceProp;
 };
 
 export default function AlbumPage() {
+  const { accessToken } = usePlayer();
   const { data, error, isLoading } = useQuery({
     queryKey: ["album"],
     queryFn: getAlbums,
+    enabled: !!accessToken,
   });
 
-  if (isLoading) {
+  if (isLoading || !accessToken) {
     return (
-      <div>
-        <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl">
+      <div className="bg-[#121212]">
+        <h1 className="p-4 text-center text-2xl font-extrabold tracking-wide text-white md:text-3xl bg-[#121212]">
           Your Albums
         </h1>
-        <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
+        <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-[#121212] p-4 md:grid-cols-4 md:gap-6 md:p-6">
           {Array.from({ length: 20 }).map((_, index) => (
             <div
               key={index}
@@ -63,11 +66,11 @@ export default function AlbumPage() {
   const albumItems: SavedAlbumItem[] = data.albums?.items ?? [];
 
   return (
-    <div>
-      <h1 className="p-4 text-center bg-black text-2xl font-extrabold tracking-wide text-white md:text-3xl">
+    <div className="bg-[#121212]">
+      <h1 className="p-4 text-center bg-[#121212] text-2xl font-extrabold tracking-wide text-white md:text-3xl">
         Your Albums
       </h1>
-      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
+      <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-[#121212] p-4 md:grid-cols-4 md:gap-6 md:p-6">
         {albumItems.map((item: SavedAlbumItem) => {
           const album = item.album;
 

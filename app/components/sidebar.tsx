@@ -40,7 +40,6 @@ export default function Sidebar() {
 
   return (
     <div className="h-full relative flex flex-col bg-[#121212] z-50">
-      <div className="md:hidden top-4 left-4 z-50 absolute"></div>
       <aside
         className={`bg-[#121212] w-60 h-full flex flex-col rounded-r-2xl transform transition-transform duration-300 absolute md:relative
     ${open ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}

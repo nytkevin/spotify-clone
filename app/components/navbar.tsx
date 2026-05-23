@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { MdHomeFilled } from "react-icons/md";
 import { FaSearch } from "react-icons/fa";
 import { useState } from "react";
+import UserProfileButton from "./user-profile";
 
 export default function Navbar() {
   const router = useRouter();
@@ -48,9 +49,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="mr-4 flex h-8 items-center rounded-xl border px-3 text-green-400 hover:bg-green-500 hover:text-white">
-        <Link href="/login">Login</Link>
-      </div>
+      <UserProfileButton />
     </div>
   );
 }

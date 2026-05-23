@@ -2,7 +2,7 @@ import Logo from "../components/logo";
 
 export default function LoginPage() {
   return (
-    <div className="flex items-center justify-center h-full bg-black">
+    <div className="flex items-center justify-center h-full bg-[#121212]">
       <div className="flex flex-col items-center gap-8 w-full max-w-sm p-12 bg-neutral-900 rounded-2xl border border-neutral-800">
         <Logo height={90} width={100} />
 

@@ -3,18 +3,21 @@ import { AlbumResponceProp } from "../types/spotify";
 import Card from "./card";
 import getAlbums from "../lib/spotify/getAlbums";
 import Link from "next/link";
+import { usePlayer } from "../context/playerContext";
 
 type SavedAlbumItem = {
   album: AlbumResponceProp;
 };
 
 export default function Album() {
+  const { accessToken } = usePlayer();
   const { data, isLoading, error } = useQuery({
     queryKey: ["album"],
     queryFn: getAlbums,
+    enabled: !!accessToken,
   });
 
-  if (isLoading)
+  if (isLoading || !accessToken)
     return (
       <div>
         <li className="space-y-4">

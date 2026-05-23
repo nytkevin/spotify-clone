@@ -198,6 +198,26 @@ export type SpotifyArtistDetailsResponseProp = {
   discography: SpotifyArtistAlbumProp[];
 };
 
+export type UserProfile = {
+  display_name: string | null;
+  external_urls: {
+    spotify: string;
+  };
+  followers: {
+    href: string | null;
+    total: number;
+  };
+  href: string;
+  id: string;
+  images: {
+    url: string;
+    height: number | null;
+    width: number | null;
+  }[];
+  type: string;
+  uri: string;
+};
+
 export type SpotifyTrack = {
   id: string;
   name: string;

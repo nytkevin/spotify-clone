@@ -38,7 +38,7 @@ type SavedAlbumItem = {
  */
 export default function AllPage() {
   // Get recently played tracks and playUri function from player context
-  const { recentlyPlayed, playUri } = usePlayer();
+  const { recentlyPlayed, playUri, accessToken } = usePlayer();
 
   // Refs for managing horizontal scroll containers
   const artistsScrollRef = useRef<HTMLDivElement>(null);
@@ -108,6 +108,7 @@ export default function AllPage() {
     queryKey: ["artists"],
     queryFn: () =>
       getArtists({ limit: 12, offset: 0, timeRange: "medium_term" }),
+    enabled: !!accessToken,
   });
 
   // Fetch user's saved albums from Spotify API
@@ -118,6 +119,7 @@ export default function AllPage() {
   } = useQuery({
     queryKey: ["albums"],
     queryFn: () => getAlbums(),
+    enabled: !!accessToken,
   });
 
   // Fetch user's playlists from Spotify API
@@ -128,27 +130,48 @@ export default function AllPage() {
   } = useQuery({
     queryKey: ["playlists"],
     queryFn: () => getPlaylists(),
+    enabled: !!accessToken,
   });
 
-  // Combine loading states: show loading if any data is still fetching
-  const isLoading = artistsLoading || albumsLoading || playlistsLoading;
+  // Combine loading states: show loading if any data is still fetching or no access token
+  const isLoading =
+    !accessToken || artistsLoading || albumsLoading || playlistsLoading;
   // Combine error states: show error if any query failed
   const hasError = artistsError || albumsError || playlistsError;
 
   // Loading state: Display skeleton loaders while data is being fetched
   if (isLoading) {
     return (
-      <div className="space-y-12 py-8">
+      <div className="space-y-12 py-8 bg-[#121212] min-h-screen">
         {/* Artists Loading Skeleton */}
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">
             Your Top Artists
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="flex gap-4 overflow-x-hidden pb-4 px-12">
             {Array.from({ length: 12 }).map((_, index) => (
-              <div key={index} className="animate-pulse space-y-3">
-                <div className="aspect-square w-full rounded-full bg-neutral-800/60" />
-                <div className="h-4 rounded bg-neutral-800/60" />
+              <div key={index} className="animate-pulse space-y-3 shrink-0">
+                <div className="w-37.5 h-37.5 rounded-full bg-neutral-800/60" />
+                <div className="h-4 w-37.5 rounded bg-neutral-800/60" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Recently Played Loading Skeleton */}
+        <section>
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Recently Played
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className="animate-pulse flex gap-4 p-3">
+                <div className="w-12 h-12 rounded bg-neutral-800/60 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 rounded bg-neutral-800/60" />
+                  <div className="h-3 w-1/2 rounded bg-neutral-800/60" />
+                  <div className="h-3 w-2/3 rounded bg-neutral-800/60" />
+                </div>
               </div>
             ))}
           </div>
@@ -157,37 +180,29 @@ export default function AllPage() {
         {/* Albums Loading Skeleton */}
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Your Albums</h2>
-          <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
-            {/* Generate 20 skeleton cards while loading */}
+          <div className="flex gap-4 overflow-x-hidden pb-4 px-12">
             {Array.from({ length: 20 }).map((_, index) => (
-              <div
-                key={index}
-                className="animate-pulse space-y-3 rounded-xl bg-neutral-900/50 p-4"
-              >
-                <div className="aspect-square w-full rounded-lg bg-neutral-800/60" />
-                <div className="h-4 rounded bg-neutral-800/60" />
-                <div className="h-3 w-3/4 rounded bg-neutral-800/60" />
+              <div key={index} className="animate-pulse space-y-3 shrink-0">
+                <div className="w-50 h-50 rounded-lg bg-neutral-800/60" />
+                <div className="h-4 w-50 rounded bg-neutral-800/60" />
+                <div className="h-3 w-42.5 rounded bg-neutral-800/60" />
               </div>
             ))}
-          </section>
+          </div>
         </section>
 
         {/* Playlists Loading Skeleton */}
         <section>
           <h2 className="text-2xl font-bold text-white mb-6">Your Playlists</h2>
-          <section className="grid grid-cols-2 items-stretch gap-4 rounded-2xl bg-black/90 p-4 md:grid-cols-4 md:gap-6 md:p-6">
-            {/* Generate 20 skeleton cards while loading */}
+          <div className="flex gap-4 overflow-x-hidden pb-4 px-12">
             {Array.from({ length: 20 }).map((_, index) => (
-              <div
-                key={index}
-                className="animate-pulse space-y-3 rounded-xl bg-neutral-900/50 p-4"
-              >
-                <div className="aspect-square w-full rounded-lg bg-neutral-800/60" />
-                <div className="h-4 rounded bg-neutral-800/60" />
-                <div className="h-3 w-3/4 rounded bg-neutral-800/60" />
+              <div key={index} className="animate-pulse space-y-3 shrink-0">
+                <div className="w-50 h-50 rounded-lg bg-neutral-800/60" />
+                <div className="h-4 w-50 rounded bg-neutral-800/60" />
+                <div className="h-3 w-42.5 rounded bg-neutral-800/60" />
               </div>
             ))}
-          </section>
+          </div>
         </section>
       </div>
     );
@@ -196,7 +211,7 @@ export default function AllPage() {
   // Error state: Display error message if any data fetch failed
   if (hasError) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-20 bg-[#121212] min-h-screen">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-400 mb-2">
             Failed to Load Content
@@ -211,7 +226,7 @@ export default function AllPage() {
 
   // Main render: Display loaded content with horizontal scroll carousels
   return (
-    <div className="space-y-12 py-8">
+    <div className="space-y-12 py-8 bg-[#121212] min-h-screen">
       {/* Artists Section - Displays user's top artists in a scrollable carousel */}
       {artistsData?.artists?.items && (
         <section>
@@ -238,7 +253,7 @@ export default function AllPage() {
             {/* Scrollable container with artists */}
             <div
               ref={artistsScrollRef}
-              className="flex gap-4 overflow-x-hidden pb-4 px-12"
+              className="flex gap-4 overflow-x-auto pb-4 px-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
               {/* Map through artists and create clickable cards */}
               {artistsData.artists.items.map((artist: ArtistResponceProp) => (
@@ -253,7 +268,7 @@ export default function AllPage() {
                     width={150}
                     height={150}
                     shape="circle"
-                    className="group border border-white/5 bg-neutral-950/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-neutral-900"
+                    className=" bg-neutral-950/80 transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-900"
                     imageClassName="aspect-square w-full max-w-[120px] ring-1 ring-white/10"
                   />
                 </Link>
@@ -291,7 +306,7 @@ export default function AllPage() {
             {recentlyPlayed.slice(0, 10).map((item) => (
               <div
                 key={`${item.track.id}-${item.played_at}`}
-                className="flex gap-4 p-3 rounded-lg hover:bg-neutral-900/50 transition-colors group"
+                className="flex gap-4 p-3 rounded-lg hover:bg-neutral-700 transition-colors group"
               >
                 {/* Album cover image with play button overlay */}
                 <div className="relative w-12 h-12 shrink-0">
@@ -358,7 +373,7 @@ export default function AllPage() {
             {/* Scrollable container with albums */}
             <div
               ref={albumsScrollRef}
-              className="flex gap-4 overflow-x-hidden pb-4 px-12"
+              className="flex gap-4 overflow-x-auto pb-4 px-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
               {/* Map through saved albums and create clickable cards */}
               {albumsData.albums.items.map((item: SavedAlbumItem) => {
@@ -376,7 +391,7 @@ export default function AllPage() {
                       shape="square"
                       label={album.name}
                       desc={album.album_type}
-                      className="group border border-white/5 bg-neutral-950/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-neutral-900"
+                      className="group bg-neutral-950/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-900"
                       imageClassName="aspect-square w-full max-w-[170px]"
                     />
                   </Link>
@@ -429,7 +444,7 @@ export default function AllPage() {
               {/* Scrollable container with playlists */}
               <div
                 ref={playlistsScrollRef}
-                className="flex gap-4 overflow-x-hidden pb-4 px-12"
+                className="flex gap-4 overflow-x-auto pb-4 px-12 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
               >
                 {/* Map through playlists and create clickable cards */}
                 {playlistsData.playlists.items.map((playlist: PlaylistProp) => {
@@ -445,7 +460,7 @@ export default function AllPage() {
                         height={200}
                         shape="square"
                         label={playlist.name}
-                        className="group border border-white/5 bg-neutral-950/80 shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-all duration-300 hover:-translate-y-1 hover:border-white/20 hover:bg-neutral-900"
+                        className=" bg-neutral-950/80 transition-all duration-300 hover:-translate-y-1 hover:bg-neutral-900"
                         imageClassName="aspect-square w-full max-w-[170px]"
                       />
                     </Link>

@@ -8,7 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { FaCirclePlay } from "react-icons/fa6";
+import { IoMdPlay } from "react-icons/io";
+import formatDuration from "@/app/lib/time";
 
 type ArtistDetailsResponse = {
   artist: {
@@ -49,13 +50,6 @@ type ArtistDetailsResponse = {
   }[];
 };
 
-function formatDuration(durationMs: number) {
-  const totalSeconds = Math.floor(durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
 export default function ArtistDetailsPage() {
   const params = useParams<{ id: string }>();
   const artistId = params.id;
@@ -81,7 +75,57 @@ export default function ArtistDetailsPage() {
 
   if (isLoading)
     return (
-      <p className="p-6 text-sm text-neutral-400">Fetching artist details...</p>
+      <div className="p-6">
+        {/* Hero skeleton */}
+        <section className="relative mb-8 overflow-hidden rounded-2xl bg-neutral-950 min-h-72">
+          <div className="relative z-10 max-w-6xl ml-7 px-1 pt-16">
+            <div className="flex flex-col md:flex-row md:items-end gap-8 mb-12">
+              {/* Artist image skeleton */}
+              <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden shadow-2xl ring-4 ring-black/50 bg-neutral-800 animate-pulse" />
+              {/* Artist name skeleton */}
+              <div className="text-center md:text-left">
+                <div className="h-16 w-64 bg-neutral-800 rounded-lg animate-pulse mb-4" />
+                <div className="h-4 w-48 bg-neutral-800 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Popular songs skeleton */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-xl font-bold">Popular songs</h2>
+          <ul className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-xl bg-neutral-900 p-3"
+              >
+                <div className="w-6 h-4 bg-neutral-800 rounded animate-pulse" />
+                <div className="h-12 w-12 rounded-md bg-neutral-800 animate-pulse" />
+                <div className="flex-1">
+                  <div className="h-4 w-40 bg-neutral-800 rounded animate-pulse mb-2" />
+                  <div className="h-3 w-32 bg-neutral-800 rounded animate-pulse" />
+                </div>
+                <div className="h-4 w-10 bg-neutral-800 rounded animate-pulse" />
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Discography skeleton */}
+        <section>
+          <h2 className="mb-4 text-xl font-bold">Discography</h2>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-3">
+                <div className="aspect-square bg-neutral-800 rounded-lg animate-pulse" />
+                <div className="h-4 bg-neutral-800 rounded animate-pulse" />
+                <div className="h-3 w-3/4 bg-neutral-800 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
     );
   if (error)
     return <p className="p-6 text-sm text-red-400">Error: {error.message}</p>;
@@ -159,7 +203,8 @@ export default function ArtistDetailsPage() {
               return (
                 <li
                   key={song.id}
-                  className="group flex items-center gap-3 rounded-xl bg-neutral-900 p-3 transition hover:bg-neutral-800"
+                  onClick={() => handlePlayTrack(song.uri, song.id)}
+                  className="group flex items-center gap-3 rounded-xl bg-neutral-900 p-3 transition hover:bg-neutral-800 cursor-pointer"
                 >
                   <div className="w-6 shrink-0 text-right text-xs text-neutral-500">
                     {isPlaying ? (
@@ -180,19 +225,6 @@ export default function ArtistDetailsPage() {
                     )}
                   </div>
 
-                  <button
-                    onClick={() => handlePlayTrack(song.uri, song.id)}
-                    disabled={!accessToken || !!loadingTrackId}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-500 text-black opacity-0 transition hover:scale-105 hover:bg-green-400 disabled:cursor-not-allowed disabled:opacity-50 group-hover:opacity-100"
-                    title={isPlaying ? "Now playing" : "Play"}
-                  >
-                    {isTrackLoading ? (
-                      <span className="animate-spin text-lg">⟳</span>
-                    ) : (
-                      <FaCirclePlay className="h-4 w-4" />
-                    )}
-                  </button>
-
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-neutral-800">
                     <Image
                       src={song.album.image ?? "/fallback.png"}
@@ -201,6 +233,17 @@ export default function ArtistDetailsPage() {
                       className="object-cover"
                       sizes="48px"
                     />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayTrack(song.uri, song.id);
+                      }}
+                      disabled={!accessToken || !!loadingTrackId}
+                      className="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title={isPlaying ? "Now playing" : "Play"}
+                    >
+                      <IoMdPlay fill="green" className="text-lg" />
+                    </button>
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -214,9 +257,13 @@ export default function ArtistDetailsPage() {
                     </p>
                   </div>
 
-                  <p className="shrink-0 text-xs text-neutral-400">
-                    {formatDuration(song.duration_ms)}
-                  </p>
+                  <span className="shrink-0 text-xs text-neutral-400 flex items-center">
+                    {isTrackLoading ? (
+                      <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      formatDuration(song.duration_ms)
+                    )}
+                  </span>
                 </li>
               );
             })}
