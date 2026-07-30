@@ -1,5 +1,5 @@
 async function getArtists() {
-  const res = await fetch("/api/jamendo/artists");
+  const res = await fetch("/api/jamendo/artist");
 
   if (!res.ok) {
     throw new Error("Failed to fetch Artists from server");
@@ -10,4 +10,4 @@ async function getArtists() {
   return artists;
 }
 
-export { getArtists };
+export default getArtists;

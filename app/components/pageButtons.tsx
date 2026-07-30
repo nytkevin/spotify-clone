@@ -8,6 +8,12 @@ export default function PageButtons() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const hiddenRoute = "/explore";
+
+  if (hiddenRoute.startsWith(pathname)) {
+    return null;
+  }
+
   const navItems = [
     { href: "/all", label: "All" },
     { href: "/artist", label: "Artist" },

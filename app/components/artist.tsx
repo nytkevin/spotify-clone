@@ -1,19 +1,46 @@
 import { useQuery } from "@tanstack/react-query";
 import getArtists from "../lib/spotify/getArtists";
+import getJamendoArtists from "../lib/jamendo/getArtist";
 import { ArtistResponceProp } from "../types/spotify";
 import Card from "./card";
 import Link from "next/link";
 import { usePlayer } from "../context/playerContext";
+import { ArtistJamendoResponse } from "../types/jamendo";
+
+type NormalizedArtist = {
+  id: string;
+  name: string;
+  image: string;
+  source: "spotify" | "jamendo";
+};
 
 export default function Artist() {
   const { accessToken } = usePlayer();
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["artist"],
-    queryFn: () => getArtists(),
-    enabled: !!accessToken,
+    queryKey: ["artist", accessToken ? "spotify" : "jamendo"],
+    queryFn: async (): Promise<NormalizedArtist[]> => {
+      if (accessToken) {
+        const res = await getArtists();
+        return res.map((artist: ArtistResponceProp) => ({
+          id: `spotify-${artist.id}`,
+          name: artist.name,
+          image: artist.images?.[0]?.url ?? "",
+          source: "spotify",
+        }));
+      }
+
+      const jamendoArtists = await getJamendoArtists();
+      return jamendoArtists.map((artist: ArtistJamendoResponse) => ({
+        id: `jamendo-${artist.id}`,
+        name: artist.name,
+        image: artist.image,
+        source: "jamendo",
+      }));
+    },
   });
 
-  if (isLoading || !accessToken)
+  if (isLoading)
     return (
       <div>
         <li className="space-y-4">
@@ -28,6 +55,7 @@ export default function Artist() {
         </li>
       </div>
     );
+
   if (error)
     return (
       <div className="w-full h-64 flex items-center justify-center px-4">
@@ -42,7 +70,7 @@ export default function Artist() {
       </div>
     );
 
-  if (!data)
+  if (!data || data.length === 0)
     return (
       <div className="w-full h-64 flex items-center justify-center px-4">
         <div className="text-center max-w-xs">
@@ -55,14 +83,15 @@ export default function Artist() {
         </div>
       </div>
     );
+
   return (
     <div>
       <li>
-        {data.artists.items.map((artist: ArtistResponceProp) => (
+        {data.map((artist) => (
           <Link key={artist.id} href={`/artist/${artist.id}`}>
             <Card
               label={artist.name}
-              src={artist.images?.[0]?.url ?? "/fallback.png"}
+              src={artist.image}
               alt={artist.name}
               shape="circle"
               width={50}
