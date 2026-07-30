@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { FaUserCircle } from "react-icons/fa";
 
 type CardProps = {
   label?: string;
@@ -38,13 +39,20 @@ export default function Card({
     <div
       className={`flex ${layoutStyle} gap-2 p-4 bg-[#121212] cursor-pointer transition-colors duration-200 ease-in-out hover:bg-neutral-700 ${className ?? ""}`}
     >
-      <Image
-        src={src}
-        alt={imageAlt}
-        width={imageWidth}
-        height={imageHeight}
-        className={`${shapeStyle} object-cover h-auto ${imageClassName ?? ""}`}
-      />
+      {src ? (
+        <Image
+          src={src}
+          alt={imageAlt}
+          width={imageWidth}
+          height={imageHeight}
+          className={`${shapeStyle} object-cover h-auto ${imageClassName ?? ""}`}
+        />
+      ) : (
+        <FaUserCircle
+          size={imageWidth}
+          className={`text-zinc-500 ${imageClassName ?? ""}`}
+        />
+      )}
 
       <div className={`${layout === "row" ? "min-w-0 flex-1" : "w-full"}`}>
         {label && (

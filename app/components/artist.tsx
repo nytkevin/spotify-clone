@@ -22,7 +22,7 @@ export default function Artist() {
     queryFn: async (): Promise<NormalizedArtist[]> => {
       if (accessToken) {
         const res = await getArtists();
-        return res.map((artist: ArtistResponceProp) => ({
+        return res.artists.items.map((artist: ArtistResponceProp) => ({
           id: `spotify-${artist.id}`,
           name: artist.name,
           image: artist.images?.[0]?.url ?? "",
@@ -34,7 +34,7 @@ export default function Artist() {
       return jamendoArtists.map((artist: ArtistJamendoResponse) => ({
         id: `jamendo-${artist.id}`,
         name: artist.name,
-        image: artist.image,
+        image: artist.image?.trim() || "",
         source: "jamendo",
       }));
     },

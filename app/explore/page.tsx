@@ -6,6 +6,8 @@ import { getTracks } from "../lib/jamendo/getTracks";
 import getJamendoArtists from "../lib/jamendo/getArtist";
 import { ArtistJamendoResponse, TrackJamendoResponse } from "../types/jamendo";
 
+import { FaUserCircle } from "react-icons/fa";
+
 export default function ExplorePage() {
   const { data: tracks, isLoading: tracksLoading } = useQuery({
     queryKey: ["jamendo-tracks"],
@@ -32,8 +34,6 @@ export default function ExplorePage() {
       <section className="mb-12">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-2xl font-semibold">Popular Artists</h2>
-
-          <span className="text-sm text-zinc-500">Jamendo</span>
         </div>
 
         {artistsLoading ? (
@@ -56,17 +56,19 @@ export default function ExplorePage() {
                   cursor-pointer
                 "
               >
-                <div className="relative aspect-square overflow-hidden rounded-full">
-                  <Image
-                    src={artist.image}
-                    alt={artist.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition"
-                  />
+                <div className="relative aspect-square overflow-hidden rounded-full bg-zinc-800 flex items-center justify-center">
+                  {artist.image?.trim() ? (
+                    <Image
+                      src={artist.image}
+                      alt={artist.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition"
+                    />
+                  ) : (
+                    <FaUserCircle className="h-full w-full text-zinc-500 p-2" />
+                  )}
                 </div>
-
                 <h3 className="mt-4 font-medium truncate">{artist.name}</h3>
-
                 <p className="text-sm text-zinc-500">Artist</p>
               </div>
             ))}
